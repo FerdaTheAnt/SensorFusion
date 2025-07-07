@@ -4,11 +4,11 @@
 
 inline FusedState fuseIMUandGPS(const IMUData& imu,
                                 const GPSData& gps,
-                                const Eigen::Quaterniond& prev_orientation){
+                                const Eigen::Quaterniond& orientation){
     FusedState fused;
     fused.timestamp = imu.timestamp;
 
-    fused.orientation = runComplementaryFilter(imu, imu, prev_orientation);
+    fused.orientation = orientation;
 
     fused.position = gps.position;
     fused.velocity = gps.velocity;

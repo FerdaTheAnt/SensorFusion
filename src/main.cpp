@@ -21,9 +21,9 @@ int main() {
 
     for(size_t i = 1; i < imu_data.size(); ++i) {
         auto curr_orientation = runComplementaryFilter(imu_data[i-1], imu_data[i], orientation);
+        orientation = curr_orientation;
         auto fused = fuseIMUandGPS(imu_data[i], gps_data[i], orientation);
         results.push_back(fused);
-        orientation = curr_orientation;
     }
 
     for (const auto& state : results) {
