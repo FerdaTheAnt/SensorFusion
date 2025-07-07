@@ -1,0 +1,11 @@
+---
+Language: Cpp
+Standard: c++17
+# BasedOnStyle: Mozilla
+
+IndentWidth: 4
+ContinuationIndentWidth: 4
+IndentAccessModifiers: false
+AccessModifierOffset: -4
+
+...
