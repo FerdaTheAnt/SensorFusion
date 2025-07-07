@@ -1,6 +1,5 @@
 #include "csv_loader.hpp"
-#include "complementary_filter.hpp"
-#include "fusion.hpp"
+#include "SensorFusionEngine.hpp"
 #include <iostream>
 
 int main() {
@@ -16,14 +15,15 @@ int main() {
     }
 
     std::vector<FusedState> results;
-    Eigen::Quaterniond orientation = Eigen::Quaterniond::Identity();
-    results.push_back({imu_data[0].timestamp, orientation});
+    SensorFusionEngine fusionEngine;
+    fusionEngine.handleGPS(gps_data[0]);
+    fusionEngine.handleIMU(imu_data[0]);
+    results.push_back(fusionEngine.getCurrentState());
 
     for(size_t i = 1; i < imu_data.size(); ++i) {
-        auto curr_orientation = runComplementaryFilter(imu_data[i-1], imu_data[i], orientation);
-        orientation = curr_orientation;
-        auto fused = fuseIMUandGPS(imu_data[i], gps_data[i], orientation);
-        results.push_back(fused);
+        fusionEngine.handleGPS(gps_data[i]);
+        fusionEngine.handleIMU(imu_data[i]);
+        results.push_back(fusionEngine.getCurrentState());
     }
 
     for (const auto& state : results) {

@@ -17,6 +17,7 @@ include_directories(include)
 set(SRC_FILES
         src/main.cpp
         src/csv_loader.cpp
+        src/SensorFusionEngine.cpp
 )
 add_executable(sensor_fusion ${SRC_FILES})
 
