@@ -2,3 +2,4 @@ build/
 .cache
 Testing/
 tests/Testing
+logs/

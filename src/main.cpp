@@ -1,4 +1,5 @@
 #include "net/UDPReceiver.hpp"
+#include "logger/StateLogger.hpp"
 #include "SensorFusionEngine.hpp"
 #include <Eigen/src/Core/Matrix.h>
 #include <chrono>
@@ -9,6 +10,7 @@ namespace json = boost::json;
 
 int main() {
     SensorFusionEngine engine;
+    StateLogger logger("logs/fusion_output.csv");
     UDPReceiver receiver(5005, [&engine](const std::string& msg){
         try {
             auto j = json::parse(msg).as_object();
@@ -48,6 +50,7 @@ int main() {
             << state.orientation.x() << " "
             << state.orientation.y() << " "
             << state.orientation.z() << "\n";
+        logger.log(state);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 

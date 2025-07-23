@@ -28,6 +28,7 @@ set(SRC_FILES
         src/csv_loader.cpp
         src/SensorFusionEngine.cpp
         src/net/UDPReceiver.cpp
+        src/logger/StateLogger.cpp
 )
 add_executable(sensor_fusion ${SRC_FILES})
 
