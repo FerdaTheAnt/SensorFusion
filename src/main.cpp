@@ -1,38 +1,54 @@
-#include "csv_loader.hpp"
+#include "net/UDPReceiver.hpp"
 #include "SensorFusionEngine.hpp"
+#include <Eigen/src/Core/Matrix.h>
+#include <chrono>
 #include <iostream>
+#include <thread>
+#include <boost/json/src.hpp>
+namespace json = boost::json;
 
 int main() {
-    auto imu_data = loadIMUCSV("data/imu.csv");
-    if(imu_data.empty()) {
-        std::cerr << "No data loaded.\n";
-        return 1;
-    }
-    auto gps_data = loadGPSCSV("data/gps.csv");
-    if(gps_data.empty()) {
-        std::cerr << "No data loaded.\n";
-        return 1;
-    }
+    SensorFusionEngine engine;
+    UDPReceiver receiver(5005, [&engine](const std::string& msg){
+        try {
+            auto j = json::parse(msg).as_object();
 
-    std::vector<FusedState> results;
-    SensorFusionEngine fusionEngine;
-    fusionEngine.handleGPS(gps_data[0]);
-    fusionEngine.handleIMU(imu_data[0]);
-    results.push_back(fusionEngine.getCurrentState());
+            IMUData imu;
+            imu.timestamp = j["timestamp"].as_double();
+            auto accel = j["accelerometer"].as_object();
+            imu.accel = Eigen::Vector3d(
+                accel["x"].as_double(), accel["y"].as_double(), accel["z"].as_double()
+            );
+            auto gyro = j["gyroscope"].as_object();
+            imu.gyro = Eigen::Vector3d(
+                gyro["x"].as_double(), gyro["y"].as_double(), gyro["z"].as_double()
+            );
 
-    for(size_t i = 1; i < imu_data.size(); ++i) {
-        fusionEngine.handleGPS(gps_data[i]);
-        fusionEngine.handleIMU(imu_data[i]);
-        results.push_back(fusionEngine.getCurrentState());
-    }
+            GPSData gps;
+            gps.timestamp = j["timestamp"].as_double();
+            auto position = j["gps"].as_object();
+            gps.position = Eigen::Vector3d(
+                position["lat"].as_double(), position["lon"].as_double(), position["alt"].as_double()
+            );
+            gps.velocity = Eigen::Vector3d::Zero();
 
-    for (const auto& state : results) {
+            engine.handleIMU(imu);
+            engine.handleGPS(gps);
+        } catch (std::exception& e) {
+            std::cerr << "[Parser] Invalid message: " << e.what() << std::endl;
+        }
+    });
+    receiver.start();
+
+    while (true) {
+        auto state = engine.getCurrentState();
         std::cout
             << state.timestamp << ", "
             << state.orientation.w() << " "
             << state.orientation.x() << " "
             << state.orientation.y() << " "
             << state.orientation.z() << "\n";
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     return 0;
