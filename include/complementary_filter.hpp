@@ -13,8 +13,12 @@ inline Eigen::Quaterniond runComplementaryFilter(const IMUData& prev,
     Eigen::Vector3d gyro = curr.gyro;
 
     Eigen::Vector3d delta_angle = gyro * dt;
-    Eigen::AngleAxisd delta_rot(delta_angle.norm(), delta_angle.normalized());
-    Eigen::Quaterniond gyro_orientation = prev_orientation * Eigen::Quaterniond(delta_rot);
+    Eigen::Quaterniond delta_q = Eigen::Quaterniond::Identity();
+    if (delta_angle.norm() > 1e-12) {
+        Eigen::AngleAxisd delta_rot(delta_angle.norm(), delta_angle.normalized());
+        delta_q = Eigen::Quaterniond(delta_rot);
+    }
+    Eigen::Quaterniond gyro_orientation = prev_orientation * delta_q;
     gyro_orientation.normalize();
 
     Eigen::Vector3d euler_gyro = gyro_orientation.toRotationMatrix().canonicalEulerAngles(2, 1, 0);
