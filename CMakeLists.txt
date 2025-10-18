@@ -36,7 +36,13 @@ target_link_libraries(sensor_fusion
     Eigen3::Eigen
 )
 
-set(TEST_FILES tests/test_csv.cpp tests/test_filter.cpp src/csv_loader.cpp)
+set(TEST_FILES
+        tests/test_logger.cpp
+        tests/test_csv.cpp
+        tests/test_filter.cpp
+        src/csv_loader.cpp
+        src/logger/StateLogger.cpp
+)
 add_executable(tests ${TEST_FILES})
 
 target_link_libraries(tests

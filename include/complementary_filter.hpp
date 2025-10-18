@@ -17,6 +17,9 @@ inline Eigen::Quaterniond runComplementaryFilter(const IMUData& prev,
     Eigen::Quaterniond gyro_orientation = prev_orientation * Eigen::Quaterniond(delta_rot);
     gyro_orientation.normalize();
 
+    Eigen::Vector3d euler_gyro = gyro_orientation.toRotationMatrix().canonicalEulerAngles(2, 1, 0);
+    double yaw = euler_gyro[0];
+
     double ax = curr.accel.x();
     double ay = curr.accel.y();
     double az = curr.accel.z();
@@ -24,7 +27,8 @@ inline Eigen::Quaterniond runComplementaryFilter(const IMUData& prev,
     double roll = atan2(ay, az);
 
     Eigen::Quaterniond accel_orientation = 
-        Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX()) *
+        Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()) *
+        Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
         Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX());
 
     Eigen::Quaterniond fused = gyro_orientation.slerp(1.0 - alpha, accel_orientation);

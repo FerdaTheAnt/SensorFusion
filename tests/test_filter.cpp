@@ -25,7 +25,13 @@ TEST_CASE("Complementary filter with rotation around one axis") {
     
     Eigen::AngleAxisd rotation(angle, Eigen::Vector3d::UnitZ());
     Eigen::Quaterniond gyro_quaternion(rotation);
-    Eigen::Quaterniond result_quaternion = gyro_quaternion.slerp(1.0-0.98, Eigen::Quaterniond::Identity());
+    Eigen::Vector3d euler_gyro = gyro_quaternion.toRotationMatrix().canonicalEulerAngles(2, 1, 0);
+    double yaw = euler_gyro[0];
+
+    Eigen::Quaterniond accel_orientation = Eigen::Quaterniond(Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()));
+    accel_orientation *= Eigen::Quaterniond::Identity();
+ 
+    Eigen::Quaterniond result_quaternion = gyro_quaternion.slerp(1.0-0.98, accel_orientation);
 
     CHECK(orientation.isApprox(result_quaternion, EPS));
 }
