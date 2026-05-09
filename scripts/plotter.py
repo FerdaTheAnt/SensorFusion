@@ -13,8 +13,9 @@ def animate(frame):
     roll = plt.plot(data['timestamp'][1:], euler[1:, 0], label="Roll")[0]
     pitch = plt.plot(data['timestamp'][1:], euler[1:, 1], label="Pitch")[0]
     yaw = plt.plot(data['timestamp'][1:], euler[1:, 2], label="Yaw")[0]
+    plt.legend()
     return (roll, pitch, yaw)
 
-ani = FuncAnimation(plt.gcf(), func=animate, frames=1, interval=1000)
+ani = FuncAnimation(plt.gcf(), func=animate, frames=1, interval=40)
 
 plt.show()
