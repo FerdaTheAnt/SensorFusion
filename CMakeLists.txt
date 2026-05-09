@@ -27,6 +27,7 @@ set(SRC_FILES
         src/main.cpp
         src/csv_loader.cpp
         src/SensorFusionEngine.cpp
+        src/KalmanFilter.cpp
         src/net/UDPReceiver.cpp
         src/logger/StateLogger.cpp
 )

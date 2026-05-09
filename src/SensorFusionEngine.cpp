@@ -13,6 +13,7 @@ SensorFusionEngine::SensorFusionEngine()
 void SensorFusionEngine::handleIMU(const IMUData& imu) {
     if(last_imu_) {
         current_state_.orientation = runComplementaryFilter(*last_imu_, imu, current_state_.orientation);
+        //current_state_.orientation = kf.update(*last_imu_, imu, current_state_.orientation);
     }
     last_imu_ = imu;
     updateFusedState();

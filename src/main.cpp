@@ -51,7 +51,7 @@ int main() {
             << state.orientation.y() << " "
             << state.orientation.z() << "\n";
         logger.log(state);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds((40));
     }
 
     return 0;

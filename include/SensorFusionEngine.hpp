@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sensors.hpp"
+#include "KalmanFilter.hpp"
 #include <optional>
 
 class SensorFusionEngine {
@@ -17,4 +18,6 @@ private:
     std::optional<IMUData> last_imu_;
     std::optional<GPSData> last_gps_;
     FusedState current_state_;
+
+    KalmanFilter kf;
 };
