@@ -1,11 +1,17 @@
 #pragma once
-#include <eigen3/Eigen/Dense>
-#include <eigen3/Eigen/src/Geometry/Quaternion.h>
+
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
 
 struct IMUData {
     double timestamp;
     Eigen::Vector3d accel;
     Eigen::Vector3d gyro;
+};
+
+struct MagnetData {
+    double timestamp;
+    Eigen::Vector3d field;
 };
 
 struct GPSData {

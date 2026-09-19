@@ -18,9 +18,11 @@ find_package(Boost REQUIRED COMPONENTS json)
 
 find_package(Catch2 REQUIRED)
 
+find_package(Threads REQUIRED)
+
 include_directories(
     include
-    ${Boost_INCLUDE_DIRECTORIES}
+    ${Boost_INCLUDE_DIRS}
 )
 
 set(SRC_FILES
@@ -30,11 +32,14 @@ set(SRC_FILES
         src/KalmanFilter.cpp
         src/net/UDPReceiver.cpp
         src/logger/StateLogger.cpp
+        src/math_tools.cpp
 )
 add_executable(sensor_fusion ${SRC_FILES})
 
 target_link_libraries(sensor_fusion
     Eigen3::Eigen
+    Boost::json
+    Threads::Threads
 )
 
 set(TEST_FILES

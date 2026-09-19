@@ -1,7 +1,8 @@
 #include "net/UDPReceiver.hpp"
 #include "logger/StateLogger.hpp"
 #include "SensorFusionEngine.hpp"
-#include <Eigen/src/Core/Matrix.h>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -11,6 +12,46 @@ namespace json = boost::json;
 int main() {
     SensorFusionEngine engine;
     StateLogger logger("logs/fusion_output.csv");
+
+    UDPReceiver dip_angle_receiver(5005, [&engine](const std::string& msg){
+        try {
+            auto j = json::parse(msg).as_object();
+
+            IMUData imu;
+            imu.timestamp = j["timestamp"].as_double();
+            auto accel = j["accelerometer"].as_object();
+            imu.accel = Eigen::Vector3d(
+                accel["x"].as_double(), accel["y"].as_double(), accel["z"].as_double()// - 9.8066
+            );
+            auto gyro = j["gyroscope"].as_object();
+            imu.gyro = Eigen::Vector3d(
+                gyro["x"].as_double(), gyro["y"].as_double(), gyro["z"].as_double()
+            );
+
+            MagnetData magnet;
+            magnet.timestamp = j["timestamp"].as_double();
+            auto field = j["magnetometer"].as_object();
+            magnet.field = Eigen::Vector3d(
+                field["x"].as_double(), field["y"].as_double(), field["z"].as_double()
+            );
+            
+            engine.initHandleMagnet(magnet);
+            engine.initHandleIMU(imu);
+
+        } catch (std::exception& e) {
+            std::cerr << "[Parser] Invalid message: " << e.what() << std::endl;
+        }
+    });
+
+    dip_angle_receiver.start();
+    for(int i = 0; i < 10; i++)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(40));
+    }
+    dip_angle_receiver.stop();
+    engine.computeInitialOrientation();
+
+
     UDPReceiver receiver(5005, [&engine](const std::string& msg){
         try {
             auto j = json::parse(msg).as_object();
@@ -19,11 +60,18 @@ int main() {
             imu.timestamp = j["timestamp"].as_double();
             auto accel = j["accelerometer"].as_object();
             imu.accel = Eigen::Vector3d(
-                accel["x"].as_double(), accel["y"].as_double(), accel["z"].as_double()
+                accel["x"].as_double(), accel["y"].as_double(), accel["z"].as_double()// - 9.8066
             );
             auto gyro = j["gyroscope"].as_object();
             imu.gyro = Eigen::Vector3d(
                 gyro["x"].as_double(), gyro["y"].as_double(), gyro["z"].as_double()
+            );
+
+            MagnetData magnet;
+            magnet.timestamp = j["timestamp"].as_double();
+            auto field = j["magnetometer"].as_object();
+            magnet.field = Eigen::Vector3d(
+                field["x"].as_double(), field["y"].as_double(), field["z"].as_double()
             );
 
             GPSData gps;
@@ -34,7 +82,7 @@ int main() {
             );
             gps.velocity = Eigen::Vector3d::Zero();
 
-            engine.handleIMU(imu);
+            engine.handleOrientation(imu, magnet);
             engine.handleGPS(gps);
         } catch (std::exception& e) {
             std::cerr << "[Parser] Invalid message: " << e.what() << std::endl;
@@ -51,7 +99,7 @@ int main() {
             << state.orientation.y() << " "
             << state.orientation.z() << "\n";
         logger.log(state);
-        std::this_thread::sleep_for(std::chrono::milliseconds((40));
+        std::this_thread::sleep_for(std::chrono::milliseconds(40));
     }
 
     return 0;

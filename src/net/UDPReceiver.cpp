@@ -1,7 +1,8 @@
 #include "net/UDPReceiver.hpp"
 
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <iostream>
+namespace asio = boost::asio;
 
 UDPReceiver::UDPReceiver(int port, Callback cb)
 : port_(port), callback_(cb), running_(false) {}

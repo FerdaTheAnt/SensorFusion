@@ -19,6 +19,7 @@ StateLogger::~StateLogger() {
 
 void StateLogger::log(const FusedState& state) {
     if(!log_file_.is_open()) return;
+    if(state.timestamp == 0.0) return; // skip invalid data
 
     log_file_ << std::fixed << std::setprecision(LOG_PRECISION)
         << state.timestamp << ","

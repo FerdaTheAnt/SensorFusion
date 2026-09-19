@@ -1,9 +1,9 @@
 #pragma once
+
 #include "sensors.hpp"
 #include <cmath>
-#include <eigen3/Eigen/src/Core/Matrix.h>
-#include <eigen3/Eigen/src/Geometry/AngleAxis.h>
-#include <eigen3/Eigen/src/Geometry/Quaternion.h>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
 
 inline Eigen::Quaterniond runComplementaryFilter(const IMUData& prev,
                                          const IMUData& curr,
