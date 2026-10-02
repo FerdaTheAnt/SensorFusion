@@ -14,7 +14,7 @@ if(POLICY CMP0167)
     cmake_policy(SET CMP0167 NEW)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS json)
+find_package(Boost REQUIRED COMPONENTS json program_options)
 
 find_package(Catch2 REQUIRED)
 
@@ -39,6 +39,7 @@ add_executable(sensor_fusion ${SRC_FILES})
 target_link_libraries(sensor_fusion
     Eigen3::Eigen
     Boost::json
+    Boost::program_options
     Threads::Threads
 )
 

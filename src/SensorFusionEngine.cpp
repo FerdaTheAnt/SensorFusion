@@ -9,13 +9,25 @@
 #include <iostream>
 
 SensorFusionEngine::SensorFusionEngine()
-    : current_state_{
+    : method_(EngineMethod::kalman), current_state_{
         0.0,
         Eigen::Quaterniond::Identity(),
         Eigen::Vector3d::Zero(),
         Eigen::Vector3d::Zero()
 }
 {}
+
+void SensorFusionEngine::setEngineMethod(const std::string& method)
+{
+    if(method == "kalman")
+    {
+        method_ = EngineMethod::kalman;
+    }
+    else if(method == "complementary")
+    {
+        method_ = EngineMethod::complementary;
+    }
+}
 
 
 void SensorFusionEngine::computeInitialOrientation()
@@ -56,20 +68,31 @@ void SensorFusionEngine::computeInitialOrientation()
     std::lock_guard<std::mutex> lock(mutex_);
     current_state_.orientation.w() = max_eigenvector(0);
     current_state_.orientation.vec() = max_eigenvector.tail<3>();
-    kf.computeInitCovariance(current_state_.orientation);
+    if(method_ == EngineMethod::kalman)
+    {
+        kf.computeInitCovariance(current_state_.orientation);
+    }
     std::cout << "Initial orientation: " << current_state_.orientation << std::endl;
 }
 
 void SensorFusionEngine::handleOrientation(const IMUData& imu,
                        const MagnetData& magnet)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if(last_imu_ && last_magnet_) {
-        current_state_.orientation = kf.update(*last_imu_, imu, *last_magnet_, magnet, current_state_.orientation);
+    if(method_ == EngineMethod::complementary)
+    {
+        handleIMU(imu);
+        last_magnet_ = magnet;
     }
-    last_magnet_ = magnet;
-    last_imu_ = imu;
-    updateFusedState();
+    else
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if(last_imu_ && last_magnet_) {
+            current_state_.orientation = kf.update(*last_imu_, imu, *last_magnet_, magnet, current_state_.orientation);
+        }
+        last_magnet_ = magnet;
+        last_imu_ = imu;
+        updateFusedState();
+    }
 }
 
 void SensorFusionEngine::initHandleIMU(const IMUData& imu)
@@ -87,11 +110,8 @@ void SensorFusionEngine::initHandleMagnet(const MagnetData& magnet)
 void SensorFusionEngine::handleIMU(const IMUData& imu) {
     std::lock_guard<std::mutex> lock(mutex_);
     //** version for complementary filter since it does not utilize magnetometer data
-    // if(last_imu_) {
-    //     current_state_.orientation = runComplementaryFilter(*last_imu_, imu, current_state_.orientation);
-    // }
-    if(last_imu_ && last_magnet_) {
-        current_state_.orientation = kf.update(*last_imu_, imu, *last_magnet_, *last_magnet_, current_state_.orientation);
+    if(last_imu_) {
+        current_state_.orientation = runComplementaryFilter(*last_imu_, imu, current_state_.orientation);
     }
     last_imu_ = imu;
     updateFusedState();

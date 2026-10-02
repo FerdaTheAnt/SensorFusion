@@ -5,9 +5,15 @@
 #include <optional>
 #include <mutex>
 
+enum class EngineMethod {
+    kalman,
+    complementary
+};
+
 class SensorFusionEngine {
 public:
     SensorFusionEngine();
+    void setEngineMethod(const std::string& method);
 
     void handleOrientation(const IMUData& imu,
                            const MagnetData& magnet);
@@ -22,6 +28,7 @@ public:
 
 private:
     void updateFusedState();
+    EngineMethod method_;
 
     std::optional<IMUData> last_imu_;
     std::optional<MagnetData> last_magnet_;

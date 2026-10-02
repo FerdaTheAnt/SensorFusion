@@ -3,17 +3,61 @@
 #include "SensorFusionEngine.hpp"
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <boost/program_options/parsers.hpp>
 #include <chrono>
 #include <iostream>
 #include <thread>
 #include <boost/json/src.hpp>
+#include <boost/program_options.hpp>
 namespace json = boost::json;
+namespace po = boost::program_options;
 
-int main() {
+int main(int argc, char *argv[]) {
     SensorFusionEngine engine;
-    StateLogger logger("logs/fusion_output.csv");
+    std::string log_filename;
 
-    UDPReceiver dip_angle_receiver(5005, [&engine](const std::string& msg){
+    po::options_description options_description;
+    options_description.add_options()
+        ("help,h", "Help")
+        ("engine,e", po::value<std::string>()->default_value("kalman"), "Engine to fuse sensor data. Options: kalman, complementary")
+        ("file,f", po::value(&log_filename)->default_value("logs/fusion_output.csv"), "Log file path");
+
+    po::variables_map variables_map;
+
+    try {
+        po::store(po::parse_command_line(argc, argv, options_description), variables_map); 
+        po::notify(variables_map);
+    } catch (std::exception &e) {
+        std::cerr << e.what();
+    }
+
+    if(variables_map.count("help"))
+    {
+        std::cout << options_description;
+        return 0;
+    } 
+    if(variables_map.count("engine"))
+    {
+        std::string method = variables_map["engine"].as<std::string>();
+        if(method == "complementary")
+        {
+            engine.setEngineMethod(method);
+        }
+        else if(method == "kalman")
+        {
+            engine.setEngineMethod(method);
+        }
+        else
+        {
+            std::cout << "Not a valid engine use either kalman or complementary\n";
+            return 1;
+        }
+    }
+
+    //StateLogger logger("logs/fusion_output.csv");
+    StateLogger logger(log_filename);
+
+    UDPReceiver init_receiver(5005, [&engine](const std::string& msg){
         try {
             auto j = json::parse(msg).as_object();
 
@@ -43,12 +87,12 @@ int main() {
         }
     });
 
-    dip_angle_receiver.start();
+    init_receiver.start();
     for(int i = 0; i < 10; i++)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(40));
     }
-    dip_angle_receiver.stop();
+    init_receiver.stop();
     engine.computeInitialOrientation();
 
 
